@@ -1300,22 +1300,7 @@ export default class {
 
         let diff = unit.mHealth - mHealth;
 
-        // Die if the unit is dead and isn't a hatching Chaos Seed
-        if (mHealth === -unit.health && unit.type !== 'ChaosSeed' && unit.assignment) {
-          // This heuristic catches wards, which cannot speak...
-          if (unit.directional !== false) {
-            let caption = result.notice || 'Nooo...';
-            let animDie1 = unit.animCaption(caption, options);
-            let animDie2 = unit.animDie();
-
-            animDie1.splice(-3, animDie2);
-
-            anim.splice(0, animDie1);
-          }
-          else
-            anim.splice(0, unit.animDie());
-        }
-        else if (changes.poisoned) {
+        if (changes.poisoned) {
           let caption = result.notice || 'Poisoned!';
           anim.splice(0, unit.animCaption(caption));
         }
@@ -1353,6 +1338,11 @@ export default class {
               repeat: 4,
             },
           ]);
+        }
+
+        // Die if the unit is dead and isn't a hatching Chaos Seed
+        if (mHealth === -unit.health && unit.type !== 'ChaosSeed' && unit.assignment) {
+          anim.splice(unit.animDie());
         }
       }
 
@@ -1414,18 +1404,10 @@ export default class {
             animDie1.splice(0, this._animApplyFocusChanges(r))
           );
 
-        // This heuristic catches wards, which cannot speak...
-        if (unit.directional !== false) {
-          let caption = result.notice || 'Nooo...';
-          animDie1.splice(0, unit.animCaption(caption));
-        }
         animDie2.splice(0, unit.animDie());
       });
 
-      if (animDie1.frames.length)
-        animDie1.splice(-3, animDie2);
-      else
-        animDie1.splice(animDie2);
+      animDie1.splice(animDie2);
 
       await animDie1.play();
     }
