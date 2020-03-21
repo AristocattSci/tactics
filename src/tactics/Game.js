@@ -688,13 +688,26 @@ export default class {
     return true;
   }
   canSelectAttack() {
+    /*
+     * You may view attack tiles, assuming there are any.
+     */
     let viewed = this.viewed;
     if (viewed)
       return !!viewed.getAttackTiles().length;
 
     let selected = this.selected;
     if (selected) {
+      /*
+       * Selected units must be able to attack and not have already attacked.
+       */
       if (this.attacked && this.isMyTeam(selected.team))
+        return false;
+
+      /*
+       * If the selected unit was poisoned at turn start, can't attack.
+       */
+      let unitState = this.state.units[selected.team.id].find(u => u.id === selected.id);
+      if (unitState.poisoned)
         return false;
 
       return !!selected.getAttackTiles().length;
@@ -1233,7 +1246,15 @@ export default class {
 
       anim.splice(this._animApplyFocusChanges(result));
 
-      if ('focusing' in changes || changes.barriered === false) {
+      if (changes.armored && changes.armored[0] === unit) {
+        this.drawCard(unit);
+
+        let caption = 'Armor Up!';
+        anim.splice(0, unit.animCaption(caption));
+
+        return anim.play();
+      }
+      else if ('focusing' in changes || changes.barriered === false) {
         let caption = result.notice;
         if (caption)
           anim.splice(0, unit.animCaption(caption));
@@ -1242,6 +1263,8 @@ export default class {
       }
       // Don't show shrub death.  They are broken apart during attack.
       else if (unit.type === 'Shrub' && mHealth === -1)
+        return anim.play();
+      else if ('armored' in changes)
         return anim.play();
 
       // Show the effect on the unit
@@ -1259,16 +1282,6 @@ export default class {
 
       if (changes.paralyzed) {
         let caption = result.notice || 'Paralyzed!';
-        anim.splice(0, unit.animCaption(caption));
-
-        return anim.play();
-      }
-
-      if (changes.barriered)
-        return anim.play();
-
-      if (changes.poisoned) {
-        let caption = result.notice || 'Poisoned!';
         anim.splice(0, unit.animCaption(caption));
 
         return anim.play();
@@ -1301,6 +1314,10 @@ export default class {
           }
           else
             anim.splice(0, unit.animDie());
+        }
+        else if (changes.poisoned) {
+          let caption = result.notice || 'Poisoned!';
+          anim.splice(0, unit.animCaption(caption));
         }
         else {
           let caption = result.notice || Math.abs(diff).toString();
@@ -1337,9 +1354,9 @@ export default class {
             },
           ]);
         }
-
-        return anim.play();
       }
+
+      return anim.play();
     };
 
     /*
