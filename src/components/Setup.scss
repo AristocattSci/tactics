@@ -9,6 +9,10 @@
     height: calc(100% - 38px);
     // let the field shrink despite large canvas
     overflow: hidden;
+
+    CANVAS {
+      display: block;
+    }
   }
 
   .menubar {
